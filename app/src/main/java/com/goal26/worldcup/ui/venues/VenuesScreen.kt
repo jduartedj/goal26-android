@@ -33,7 +33,12 @@ fun VenuesScreen(viewModel: VenuesViewModel = hiltViewModel()) {
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(uiState.venues) { venue ->
+                    item { AdBannerView() }
+                    items(uiState.venues.take(8)) { venue ->
+                        VenueCard(venue)
+                    }
+                    item { AdBannerView() }
+                    items(uiState.venues.drop(8)) { venue ->
                         VenueCard(venue)
                     }
                     item { AdBannerView() }

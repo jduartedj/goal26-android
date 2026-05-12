@@ -82,6 +82,7 @@ fun TeamsScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        item { AdBannerView() }
                         items(uiState.filteredTeams) { team ->
                             TeamCard(team = team, onClick = { onTeamClick(team.id) })
                         }

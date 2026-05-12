@@ -99,6 +99,9 @@ fun MatchesScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Ad at top — visible immediately
+                        item { AdBannerView() }
+
                         // Next match countdown (only on "All" filter)
                         if (uiState.selectedGroup == null && uiState.nextMatch != null) {
                             item {
@@ -110,7 +113,19 @@ fun MatchesScreen(
                             }
                         }
 
-                        items(uiState.filteredMatches) { match ->
+                        // First batch of matches
+                        val matches = uiState.filteredMatches
+                        items(matches.take(5)) { match ->
+                            MatchCard(match = match, onClick = { onMatchClick(match.id) })
+                        }
+
+                        // Mid-content ad after 5th match
+                        if (matches.size > 5) {
+                            item { AdBannerView() }
+                        }
+
+                        // Remaining matches
+                        items(matches.drop(5)) { match ->
                             MatchCard(match = match, onClick = { onMatchClick(match.id) })
                         }
 

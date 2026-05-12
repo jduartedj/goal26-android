@@ -61,6 +61,8 @@ fun TriviaScreen(viewModel: TriviaViewModel = hiltViewModel()) {
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
+                    // Ad at top of trivia
+                    AdBannerView()
                     // Progress
                     LinearProgressIndicator(
                         progress = { (uiState.currentIndex + 1).toFloat() / uiState.questions.size },

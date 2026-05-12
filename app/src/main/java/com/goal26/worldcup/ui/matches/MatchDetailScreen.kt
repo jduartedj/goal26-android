@@ -2,6 +2,7 @@ package com.goal26.worldcup.ui.matches
 
 import android.content.Intent
 import android.provider.CalendarContract
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.goal26.worldcup.data.repository.StaticData
 import com.goal26.worldcup.domain.model.Match
 import com.goal26.worldcup.domain.usecase.DateTimeUtils
 import com.goal26.worldcup.ui.components.AdBannerView
@@ -26,6 +29,7 @@ import com.goal26.worldcup.ui.components.CountdownTimer
 fun MatchDetailScreen(
     matchId: Int,
     onBack: () -> Unit,
+    onTeamClick: (String) -> Unit = {},
     viewModel: MatchesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -63,6 +67,9 @@ fun MatchDetailScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Ad at top of page
+            AdBannerView()
+
             match?.let { m ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -86,12 +93,20 @@ fun MatchDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Home team — clickable
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onTeamClick(m.homeTeamCode) }
                             ) {
                                 Text(m.homeTeamCode, fontWeight = FontWeight.Bold, fontSize = 28.sp)
-                                Text(m.homeTeam, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    m.homeTeam,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline
+                                )
                             }
                             if (m.homeScore != null && m.awayScore != null) {
                                 Text(
@@ -103,12 +118,20 @@ fun MatchDetailScreen(
                             } else {
                                 Text("vs", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                            // Away team — clickable
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onTeamClick(m.awayTeamCode) }
                             ) {
                                 Text(m.awayTeamCode, fontWeight = FontWeight.Bold, fontSize = 28.sp)
-                                Text(m.awayTeam, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    m.awayTeam,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline
+                                )
                             }
                         }
 
@@ -122,11 +145,11 @@ fun MatchDetailScreen(
                         HorizontalDivider()
                         Spacer(Modifier.height(16.dp))
 
-                        InfoRow("🏟️ Stadium", m.stadium)
-                        InfoRow("📍 City", m.city)
-                        InfoRow("🕐 Kickoff", DateTimeUtils.formatFull(m.kickoffUtc))
-                        InfoRow("📊 Status", m.status.replaceFirstChar { it.uppercase() })
-                        InfoRow("🔢 Round", m.round.replaceFirstChar { it.uppercase() })
+                        InfoRow("Stadium", m.stadium)
+                        InfoRow("City", m.city)
+                        InfoRow("Kickoff", DateTimeUtils.formatFull(m.kickoffUtc))
+                        InfoRow("Status", m.status.replaceFirstChar { it.uppercase() })
+                        InfoRow("Round", m.round.replaceFirstChar { it.uppercase() })
                     }
                 }
 
@@ -180,7 +203,7 @@ private fun addToCalendar(context: android.content.Context, match: Match) {
     val instant = DateTimeUtils.parseUtc(match.kickoffUtc)
     val intent = Intent(Intent.ACTION_INSERT).apply {
         data = CalendarContract.Events.CONTENT_URI
-        putExtra(CalendarContract.Events.TITLE, "⚽ ${match.homeTeam} vs ${match.awayTeam}")
+        putExtra(CalendarContract.Events.TITLE, "${match.homeTeam} vs ${match.awayTeam}")
         putExtra(CalendarContract.Events.EVENT_LOCATION, "${match.stadium}, ${match.city}")
         putExtra(CalendarContract.Events.DESCRIPTION, "FIFA World Cup 2026 - ${match.groupName?.let { "Group $it" } ?: match.round}\n\nPowered by Goal26")
         putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, instant.toEpochMilli())
@@ -195,7 +218,7 @@ private fun shareMatch(context: android.content.Context, match: Match) {
     } else {
         "${match.homeTeam} vs ${match.awayTeam}"
     }
-    val text = "⚽ FIFA World Cup 2026\n$scoreText\n🏟️ ${match.stadium}, ${match.city}\n🕐 ${DateTimeUtils.formatFull(match.kickoffUtc)}\n\nTrack with Goal26! 🏆"
+    val text = "FIFA World Cup 2026\n$scoreText\n${match.stadium}, ${match.city}\n${DateTimeUtils.formatFull(match.kickoffUtc)}\n\nTrack with Goal26!"
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)

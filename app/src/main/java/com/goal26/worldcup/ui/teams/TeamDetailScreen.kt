@@ -1,6 +1,7 @@
 package com.goal26.worldcup.ui.teams
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,23 +21,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.goal26.worldcup.data.repository.SquadData
+import com.goal26.worldcup.data.repository.StaticData
+import com.goal26.worldcup.domain.model.Match
 import com.goal26.worldcup.domain.model.Player
+import com.goal26.worldcup.domain.usecase.DateTimeUtils
 import com.goal26.worldcup.ui.components.AdBannerView
+import com.goal26.worldcup.ui.matches.MatchesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeamDetailScreen(
     teamId: String,
     onBack: () -> Unit,
-    viewModel: TeamsViewModel = hiltViewModel()
+    onMatchClick: (Int) -> Unit = {},
+    viewModel: TeamsViewModel = hiltViewModel(),
+    matchesViewModel: MatchesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val matchesState by matchesViewModel.uiState.collectAsState()
     val team = uiState.teams.find { it.id == teamId }
     val squad = SquadData.getSquad(teamId)
     val context = LocalContext.current
     var isFavorite by remember { mutableStateOf(false) }
 
-    // Check favorite on load
+    // Get team name for matching
+    val teamName = team?.name ?: StaticData.teamCodes.entries.find { it.value == teamId }?.key ?: ""
+
+    // Filter matches for this team
+    val teamMatches = matchesState.matches.filter {
+        it.homeTeamCode == teamId || it.awayTeamCode == teamId ||
+        it.homeTeam == teamName || it.awayTeam == teamName
+    }
+
     LaunchedEffect(teamId) {
         val prefs = context.getSharedPreferences("goal26_prefs", android.content.Context.MODE_PRIVATE)
         isFavorite = prefs.getStringSet("fav_teams", emptySet())?.contains(teamId) == true
@@ -82,6 +98,9 @@ fun TeamDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Ad at top
+            item { AdBannerView() }
+
             team?.let { t ->
                 // Hero
                 item {
@@ -104,29 +123,47 @@ fun TeamDetailScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            InfoRow("🏷️ FIFA Code", t.code)
-                            InfoRow("📊 FIFA Ranking", "#${t.fifaRanking}")
-                            InfoRow("🌍 Confederation", t.confederation)
-                            InfoRow("📋 Group", "Group ${t.group}")
-                            InfoRow("👔 Coach", t.coach)
-                            InfoRow("🏆 Best WC Finish", t.bestFinish)
-                            InfoRow("📅 WC Appearances", "${t.worldCupAppearances}")
+                            InfoRow("FIFA Code", t.code)
+                            InfoRow("FIFA Ranking", "#${t.fifaRanking}")
+                            InfoRow("Confederation", t.confederation)
+                            InfoRow("Group", "Group ${t.group}")
+                            InfoRow("Coach", t.coach)
+                            InfoRow("Best WC Finish", t.bestFinish)
+                            InfoRow("WC Appearances", "${t.worldCupAppearances}")
                         }
                     }
                 }
 
-                // Squad section
-                squad?.let { s ->
+                // === TEAM MATCHES SECTION ===
+                if (teamMatches.isNotEmpty()) {
                     item {
                         Text(
-                            "📋 Expected Squad",
+                            "Scheduled Matches",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
-                    // Group by position
+                    items(teamMatches) { match ->
+                        TeamMatchCard(match = match, teamCode = teamId, onClick = { onMatchClick(match.id) })
+                    }
+
+                    // Ad between matches and squad
+                    item { AdBannerView() }
+                }
+
+                // === SQUAD SECTION ===
+                squad?.let { s ->
+                    item {
+                        Text(
+                            "Expected Squad",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+
                     val positions = listOf("GK" to "Goalkeepers", "DF" to "Defenders", "MF" to "Midfielders", "FW" to "Forwards")
                     positions.forEach { (posCode, posLabel) ->
                         val playersInPos = s.players.filter { it.position == posCode }
@@ -151,7 +188,7 @@ fun TeamDetailScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
                         Text(
-                            "📋 Squad information will be available closer to the tournament.\nFinal squads announced late May 2026.",
+                            "Squad information will be available closer to the tournament.\nFinal squads announced late May 2026.",
                             modifier = Modifier.padding(16.dp),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -159,9 +196,79 @@ fun TeamDetailScreen(
                     }
                 }
 
+                // Bottom ad
                 item { AdBannerView() }
             } ?: item {
                 Text("Team not found")
+            }
+        }
+    }
+}
+
+@Composable
+fun TeamMatchCard(match: Match, teamCode: String, onClick: () -> Unit) {
+    val isHome = match.homeTeamCode == teamCode
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Group label
+            match.groupName?.let {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        "Grp $it",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+            }
+
+            // Opponent
+            val opponent = if (isHome) match.awayTeam else match.homeTeam
+            val opponentCode = if (isHome) match.awayTeamCode else match.homeTeamCode
+            val prefix = if (isHome) "vs" else "@"
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text("$prefix $opponent ($opponentCode)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "${DateTimeUtils.formatLocalDate(match.kickoffUtc)} • ${DateTimeUtils.formatLocalTime(match.kickoffUtc)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    match.stadium,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Score or status
+            if (match.homeScore != null && match.awayScore != null) {
+                Text(
+                    "${match.homeScore}-${match.awayScore}",
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Text(
+                    DateTimeUtils.getRelativeTime(match.kickoffUtc),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
             }
         }
     }
@@ -183,7 +290,6 @@ fun PlayerCard(player: Player) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Number
             Surface(
                 shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
@@ -241,7 +347,7 @@ private fun InfoRow(label: String, value: String) {
 }
 
 private fun shareTeam(context: android.content.Context, name: String, group: String, ranking: Int) {
-    val text = "🏆 $name — FIFA World Cup 2026\n📊 FIFA Ranking: #$ranking\n📋 Group $group\n\nTrack with Goal26! ⚽"
+    val text = "$name — FIFA World Cup 2026\nFIFA Ranking: #$ranking\nGroup $group\n\nTrack with Goal26!"
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)

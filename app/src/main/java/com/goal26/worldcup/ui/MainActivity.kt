@@ -131,14 +131,22 @@ fun Goal26App(isDark: Boolean, onToggleTheme: () -> Unit) {
                 arguments = listOf(navArgument("teamId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val teamId = backStackEntry.arguments?.getString("teamId") ?: ""
-                TeamDetailScreen(teamId = teamId, onBack = { navController.popBackStack() })
+                TeamDetailScreen(
+                    teamId = teamId,
+                    onBack = { navController.popBackStack() },
+                    onMatchClick = { matchId -> navController.navigate("match/$matchId") }
+                )
             }
             composable(
                 Screen.MatchDetail.route,
                 arguments = listOf(navArgument("matchId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val matchId = backStackEntry.arguments?.getInt("matchId") ?: 0
-                MatchDetailScreen(matchId = matchId, onBack = { navController.popBackStack() })
+                MatchDetailScreen(
+                    matchId = matchId,
+                    onBack = { navController.popBackStack() },
+                    onTeamClick = { teamCode -> navController.navigate("team/$teamCode") }
+                )
             }
         }
     }

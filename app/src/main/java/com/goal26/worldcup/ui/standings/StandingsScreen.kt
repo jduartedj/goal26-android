@@ -50,7 +50,14 @@ fun StandingsScreen(viewModel: StandingsViewModel = hiltViewModel()) {
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(uiState.standings) { group ->
+                    // Ad at top
+                    item { AdBannerView() }
+                    items(uiState.standings.take(6)) { group ->
+                        GroupTable(group)
+                    }
+                    // Mid-content ad between group 6 and 7
+                    item { AdBannerView() }
+                    items(uiState.standings.drop(6)) { group ->
                         GroupTable(group)
                     }
                     item {
