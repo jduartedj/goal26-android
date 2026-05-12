@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Soccer ball -->
+    <group android:translateX="20" android:translateY="16">
+        <!-- Outer circle -->
+        <path
+            android:fillColor="#D4AF37"
+            android:pathData="M34,0C15.22,0,0,15.22,0,34s15.22,34,34,34s34-15.22,34-34S52.78,0,34,0z M34,64C17.43,64,4,50.57,4,34S17.43,4,34,4s30,13.43,30,30S50.57,64,34,64z"/>
+        
+        <!-- Pentagon pattern (soccer ball) -->
+        <path
+            android:fillColor="#D4AF37"
+            android:pathData="M34,12l-8,6l-3,9l5,8h12l5-8l-3-9z"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1.5"/>
+        <path
+            android:fillColor="#FFE082"
+            android:pathData="M34,14l-6.5,5l-2.5,7.5l4,6.5h10l4-6.5l-2.5-7.5z"/>
+        
+        <!-- "26" text -->
+        <path
+            android:fillColor="#D4AF37"
+            android:pathData="M20,42 Q20,38 24,38 Q28,38 28,42 Q28,46 24,50 L20,50 L20,48 L24,44 Q26,42 26,41 Q26,40 24,40 Q22,40 22,42 Z"/>
+        <path
+            android:fillColor="#D4AF37"
+            android:pathData="M32,42 Q32,38 36,38 Q40,38 40,42 L40,44 Q40,46 38,47 Q40,48 40,50 L40,50 Q40,50 36,50 Q32,50 32,46 Q32,44 34,43 Q32,42 32,42z M36,40 Q34,40 34,41 Q34,42 36,42 Q38,42 38,41 Q38,40 36,40z M36,44 Q34,44 34,46 Q34,48 36,48 Q38,48 38,46 Q38,44 36,44z"/>
+        
+        <!-- Small decorative stars -->
+        <path
+            android:fillColor="#FFE082"
+            android:pathData="M10,20l2,1l-1,2l-1,-2l-2,1l2,-1l-2,-1l2,1l1,-2l1,2z"/>
+        <path
+            android:fillColor="#FFE082"
+            android:pathData="M55,15l2,1l-1,2l-1,-2l-2,1l2,-1l-2,-1l2,1l1,-2l1,2z"/>
+        <path
+            android:fillColor="#FFE082"
+            android:pathData="M52,52l2,1l-1,2l-1,-2l-2,1l2,-1l-2,-1l2,1l1,-2l1,2z"/>
+    </group>
+</vector>
